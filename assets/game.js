@@ -23,12 +23,16 @@ import num6Src from "./sprites/6.png";
 import num7Src from "./sprites/7.png";
 import num8Src from "./sprites/8.png";
 import num9Src from "./sprites/9.png";
+// Import SVG icons
+import volumeUpSrc from "./volume_up.svg";
+import volumeOffSrc from "./volume_off.svg";
+import playPauseSrc from "./play_pause.svg";
 
 // Game Configuration
 const CONFIG = {
   canvas: {
-    width: 800,
-    height: 400,
+    width: 1000,
+    height: 500,
   },
   gravity: 0.4,
   jumpForce: -14,
@@ -37,7 +41,7 @@ const CONFIG = {
   groundLevel: 280,
   obstacleSpawnInterval: 2500, // Increased from 1500 to 2500ms
   obstacleSpawnVariance: 800, // Increased from 500 to 800ms
-  treatSpawnChance: 0.1, // 10% chance to spawn treat instead of regular obstacle
+  treatSpawnChance: 0.08, // 8% chance to spawn treat instead of regular obstacle
 };
 
 // Cookie utility functions
@@ -105,7 +109,7 @@ class Billy {
   constructor() {
     this.width = 100;
     this.height = 100;
-    this.x = 130;
+    this.x = 70;
     this.y = CONFIG.groundLevel;
     this.velocityY = 0;
     this.isJumping = false;
@@ -313,7 +317,7 @@ class Obstacle {
     this.spriteSheet = null;
     this.spriteLoaded = false;
     this.animationFrame = 0;
-    this.animationSpeed = 0.05; // Slower animation speed
+    this.animationSpeed = 0.03; // Slower animation speed
     this.hasCollided = false; // Track if collision occurred
 
     // Set dimensions and position based on type
@@ -329,7 +333,8 @@ class Obstacle {
         this.hitboxOffsetY = 20;
         this.hitboxWidth = 50; // 80 - 30 = 50
         this.hitboxHeight = 50;
-        this.loadSprite(birdSpriteSrc);
+        this.spriteSheet = preloadedSprites.bird;
+        this.spriteLoaded = preloadedSprites.bird.complete;
         break;
       case "priest":
         this.width = 200;
@@ -342,7 +347,8 @@ class Obstacle {
         this.hitboxOffsetY = 80; // Less vertical offset
         this.hitboxWidth = 80; // Narrower
         this.hitboxHeight = 120; // Taller
-        this.loadSprite(priestSpriteSrc);
+        this.spriteSheet = preloadedSprites.priest;
+        this.spriteLoaded = preloadedSprites.priest.complete;
         break;
       case "mouse":
         this.width = 80;
@@ -355,7 +361,8 @@ class Obstacle {
         this.hitboxOffsetY = 50;
         this.hitboxWidth = 55;
         this.hitboxHeight = 30;
-        this.loadSprite(mouseSpriteSrc);
+        this.spriteSheet = preloadedSprites.mouse;
+        this.spriteLoaded = preloadedSprites.mouse.complete;
         break;
       case "treat":
         // Original resolution: 768x500, aspect ratio = 1.536
@@ -370,11 +377,13 @@ class Obstacle {
         this.hitboxOffsetY = 0;
         this.hitboxWidth = 50;
         this.hitboxHeight = 32; // Adjusted for aspect ratio
-        this.loadSprite(treatSpriteSrc);
+        this.spriteSheet = preloadedSprites.treat;
+        this.spriteLoaded = preloadedSprites.treat.complete;
         break;
     }
 
-    this.x = CONFIG.canvas.width;
+    // Spawn further off-screen for mobile performance (300px buffer)
+    this.x = CONFIG.canvas.width + 300;
     this.speed = gameState.gameSpeed;
   }
 
@@ -489,6 +498,20 @@ const images = {
   numbers: [],
 };
 
+// Preload obstacle sprites for better mobile performance
+const preloadedSprites = {
+  bird: new Image(),
+  priest: new Image(),
+  mouse: new Image(),
+  treat: new Image(),
+};
+
+// Load preloaded sprites
+preloadedSprites.bird.src = birdSpriteSrc;
+preloadedSprites.priest.src = priestSpriteSrc;
+preloadedSprites.mouse.src = mouseSpriteSrc;
+preloadedSprites.treat.src = treatSpriteSrc;
+
 // Use night background if it's nighttime (6 PM - 6 AM)
 const currentHour = new Date().getHours();
 const isNightTime = currentHour >= 18 || currentHour < 6;
@@ -539,6 +562,15 @@ function spawnObstacle() {
     (Math.random() - 0.5) * CONFIG.obstacleSpawnVariance;
 
   if (timeSinceLastObstacle > spawnDelay) {
+    // Check if last obstacle is far enough away (minimum 400px spacing)
+    const minSpacing = 400;
+    const lastObstacle = obstacles[obstacles.length - 1];
+
+    if (lastObstacle && lastObstacle.x > CONFIG.canvas.width - minSpacing) {
+      // Last obstacle is still too close to spawn point, skip this spawn
+      return;
+    }
+
     let randomType;
 
     // 15% chance to spawn treat, 85% chance for regular obstacles
@@ -803,7 +835,10 @@ function togglePause() {
 
   gameState.isPaused = !gameState.isPaused;
   const pauseBtn = document.getElementById("pauseButton");
-  pauseBtn.textContent = gameState.isPaused ? "▶" : "⏸";
+  const pauseImg = pauseBtn.querySelector("img");
+  if (pauseImg) {
+    pauseImg.style.transform = gameState.isPaused;
+  }
 }
 
 // Check if game is in start state
@@ -854,7 +889,10 @@ document.getElementById("pauseButton").addEventListener("click", togglePause);
 document.getElementById("muteButton").addEventListener("click", () => {
   gameState.isMuted = !gameState.isMuted;
   const muteBtn = document.getElementById("muteButton");
-  muteBtn.textContent = gameState.isMuted ? "🔇" : "🔊";
+  const muteImg = muteBtn.querySelector("img");
+  if (muteImg) {
+    muteImg.src = gameState.isMuted ? volumeOffSrc : volumeUpSrc;
+  }
 });
 
 // Initialize and start game loop
