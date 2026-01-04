@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>Billy's Adventure - Endless Runner</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="game-container">
+      <canvas id="gameCanvas"></canvas>
+      <div id="startScreen" class="screen start-idle">
+        <div class="instructions-container">
+          <h1>Aventura lui Billy</h1>
+          <p class="instruction">Apasă SPACE sau CLICK pentru a începe</p>
+          <p class="instruction">Sari pentru a prinde păsările și șoarecii</p>
+          <p class="instruction">Evită preoții!</p>
+        </div>
+      </div>
+      <div id="gameOverScreen" class="screen hidden">
+        <h1>Of. . .</h1>
+        <p>Scor: <span id="finalScore">0</span></p>
+        <p>Cel mai bun scor: <span id="highScore">0</span></p>
+        <button id="restartButton">Joacă din nou</button>
+      </div>
+      <div id="hud" class="hidden">
+        <div class="score">Scor: <span id="currentScore">0</span></div>
+        <div class="instructions">SPACE / Click pentru a sări</div>
+      </div>
+      <button id="muteButton">🔊</button>
+      <button id="pauseButton" class="hidden">⏸</button>
+    </div>
+    <script type="module" src="assets/game.js"></script>
+  </body>
+</html>
