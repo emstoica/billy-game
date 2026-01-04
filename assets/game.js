@@ -76,7 +76,13 @@ const gameState = {
 
 // Canvas Setup
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", {
+  alpha: false, // Disable transparency for better performance
+  desynchronized: true, // Hint for better performance on mobile
+});
+
+// Disable image smoothing for crisp pixel art and better performance
+ctx.imageSmoothingEnabled = false;
 
 // Game Objects - declare early
 let billy;
@@ -144,17 +150,8 @@ class Billy {
     this.spriteSheet = new Image();
     this.spriteSheet.onload = () => {
       this.spriteLoaded = true;
-      console.log("Billy sprite sheet loaded successfully!");
-      console.log(
-        "Sprite dimensions:",
-        this.spriteSheet.width,
-        "x",
-        this.spriteSheet.height
-      );
     };
-    this.spriteSheet.onerror = () => {
-      console.error("Sprite sheet failed to load:", src);
-    };
+    this.spriteSheet.onerror = () => {};
     this.spriteSheet.src = src;
   }
 
@@ -162,11 +159,8 @@ class Billy {
     this.idleSpriteSheet = new Image();
     this.idleSpriteSheet.onload = () => {
       this.idleSpriteLoaded = true;
-      console.log("Billy idle sprite sheet loaded successfully!");
     };
-    this.idleSpriteSheet.onerror = () => {
-      console.error("Idle sprite sheet failed to load:", src);
-    };
+    this.idleSpriteSheet.onerror = () => {};
     this.idleSpriteSheet.src = src;
   }
 
@@ -175,9 +169,9 @@ class Billy {
       this.velocityY = CONFIG.jumpForce;
       this.isJumping = true;
       // Play jump sound
-      if (!gameState.isMuted) {
+      if (!gameState.isMuted && audioUnlocked) {
         audio.jump.currentTime = 0;
-        audio.jump.play().catch((e) => console.log("Audio play failed:", e));
+        audio.jump.play().catch(() => {});
       }
     }
   }
@@ -243,8 +237,8 @@ class Billy {
         srcY,
         frameWidth,
         frameHeight,
-        this.x,
-        this.y,
+        Math.round(this.x),
+        Math.round(this.y),
         this.width,
         this.height
       );
@@ -279,8 +273,8 @@ class Billy {
         srcY,
         frameWidth,
         frameHeight,
-        this.x,
-        this.y,
+        Math.round(this.x),
+        Math.round(this.y),
         this.width,
         this.height
       );
@@ -392,9 +386,7 @@ class Obstacle {
     this.spriteSheet.onload = () => {
       this.spriteLoaded = true;
     };
-    this.spriteSheet.onerror = () => {
-      console.log(`${this.type} sprite not found, using placeholder`);
-    };
+    this.spriteSheet.onerror = () => {};
     this.spriteSheet.src = src;
   }
 
@@ -490,7 +482,26 @@ const audio = {
   hit: new Audio(hitSrc),
   die: new Audio(dieSrc),
 };
+// Preload and unlock audio for mobile
+let audioUnlocked = false;
+Object.values(audio).forEach((sound) => {
+  sound.preload = "auto";
+  sound.load();
+});
 
+function unlockAudio() {
+  if (audioUnlocked) return;
+  Object.values(audio).forEach((sound) => {
+    sound
+      .play()
+      .then(() => {
+        sound.pause();
+        sound.currentTime = 0;
+      })
+      .catch(() => {});
+  });
+  audioUnlocked = true;
+}
 // Image Assets
 const images = {
   background: new Image(),
@@ -632,11 +643,9 @@ function update() {
           // Caught a treat - 5 points and slow down the game!
           gameState.score += 5;
           gameState.gameSpeed = CONFIG.gameSpeed; // Reset speed to initial value
-          if (!gameState.isMuted) {
+          if (!gameState.isMuted && audioUnlocked) {
             audio.point.currentTime = 0;
-            audio.point
-              .play()
-              .catch((e) => console.log("Audio play failed:", e));
+            audio.point.play().catch(() => {});
           }
           // Remove after a brief delay to show collision frame
           setTimeout(() => {
@@ -646,11 +655,9 @@ function update() {
         } else {
           // Caught a bird or mouse - 1 point!
           gameState.score += 1;
-          if (!gameState.isMuted) {
+          if (!gameState.isMuted && audioUnlocked) {
             audio.point.currentTime = 0;
-            audio.point
-              .play()
-              .catch((e) => console.log("Audio play failed:", e));
+            audio.point.play().catch(() => {});
           }
           // Remove after a brief delay to show collision frame
           setTimeout(() => {
@@ -670,12 +677,12 @@ function update() {
         billy.currentAnimation = "hit"; // Trigger Billy's hit animation
         billy.animationFrame = 0; // Reset to start of hit animation
 
-        if (!gameState.isMuted) {
+        if (!gameState.isMuted && audioUnlocked) {
           audio.hit.currentTime = 0;
-          audio.hit.play().catch((e) => console.log("Audio play failed:", e));
+          audio.hit.play().catch(() => {});
           setTimeout(() => {
             audio.die.currentTime = 0;
-            audio.die.play().catch((e) => console.log("Audio play failed:", e));
+            audio.die.play().catch(() => {});
           }, 100);
         }
 
@@ -820,6 +827,9 @@ function gameOver() {
 
 // Start Game
 function startGame() {
+  // Unlock audio on first interaction
+  unlockAudio();
+
   init();
   gameState.isRunning = true;
   gameState.isPaused = false;
